@@ -1,0 +1,21 @@
+/keystore.properties
+/xoboard-release.keystore
+
+# Local Android SDK and Gradle state
+/local.properties
+/.gradle/
+**/build/
+
+# Signing keys and generated packages
+*.keystore
+*.jks
+*.p12
+*.pfx
+*.apk
+*.aab
+
+# IDE and operating-system files
+/.idea/
+*.iml
+.DS_Store
+Thumbs.db

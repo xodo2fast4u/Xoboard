@@ -1,0 +1,67 @@
+plugins {
+    id 'com.android.application'
+}
+
+def releasePropertiesFile = rootProject.file('keystore.properties')
+def releaseProperties = new Properties()
+if (releasePropertiesFile.exists()) {
+    releasePropertiesFile.withInputStream { releaseProperties.load(it) }
+    ['storeFile', 'storePassword', 'keyAlias', 'keyPassword'].each { key ->
+        if (!releaseProperties.getProperty(key)) {
+            throw new GradleException("Missing '${key}' in keystore.properties")
+        }
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.compilerArgs << '-Xlint:deprecation'
+}
+
+android {
+    namespace = 'com.xodobyte.xoboard'
+    compileSdk = 35
+
+    defaultConfig {
+        applicationId = 'com.xodobyte.xoboard'
+        minSdk = 26
+        targetSdk = 35
+        versionCode = 1
+        versionName = '1.0'
+    }
+
+    androidResources {
+        localeFilters = ['en']
+    }
+
+    if (releasePropertiesFile.exists()) {
+        signingConfigs {
+            release {
+                storeFile = file(releaseProperties.getProperty('storeFile'))
+                storePassword = releaseProperties.getProperty('storePassword')
+                keyAlias = releaseProperties.getProperty('keyAlias')
+                keyPassword = releaseProperties.getProperty('keyPassword')
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled = true
+            shrinkResources = true
+            proguardFiles(getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro')
+            signingConfig = releasePropertiesFile.exists() ? signingConfigs.release : signingConfigs.debug
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+}
+
+tasks.register('xoboardApk', Copy) {
+    dependsOn 'assembleRelease'
+    from 'build/outputs/apk/release/app-release.apk'
+    into 'build/dist'
+    rename { 'Xoboard.apk' }
+}
